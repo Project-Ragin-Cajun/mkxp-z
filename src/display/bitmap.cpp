@@ -2466,10 +2466,7 @@ IntRect Bitmap::textSize(const char *str)
         if(!w) {
             h = 0;
         } else {
-            /* RGSS normalizes the reported heights.
-             * Note that this may result in the bottoms
-             * of some characters being cut off. */
-             h = TTF_FontHeight(sdlFont);
+            h = p->font->getSize();
         }
     }
     
