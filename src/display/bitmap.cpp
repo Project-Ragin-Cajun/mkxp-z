@@ -2466,7 +2466,7 @@ IntRect Bitmap::textSize(const char *str)
         if(!w) {
             h = 0;
         } else {
-            h = p->font->getSize();
+            h = std::max(TTF_FontHeight(sdlFont), p->font->getSize());
         }
     }
     
