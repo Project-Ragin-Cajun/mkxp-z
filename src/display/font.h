@@ -48,7 +48,8 @@ public:
 	                   const std::string &filename);
 
 	_TTF_Font *getFont(std::string family,
-	                   int size, float hiresMult, int outline_size = 0);
+	                   int size, float hiresMult, int outline_size = 0, 
+					   bool solid = false);
 
 	bool fontPresent(std::string family) const;
 

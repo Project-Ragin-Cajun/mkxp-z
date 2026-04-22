@@ -535,7 +535,8 @@ static int calc_ppem_for_height(Font_Container *font, int height)
 /* /wine */
 
 _TTF_Font *SharedFontState::getFont(std::string family,
-                                    int size, float hiresMult, int outline_size)
+                                    int size, float hiresMult, int outline_size, 
+									bool solid)
 {
 	std::transform(family.begin(), family.end(), family.begin(),
 		[](unsigned char c){ return std::tolower(c); });
@@ -614,13 +615,21 @@ _TTF_Font *SharedFontState::getFont(std::string family,
 		{
 			if (ppem == 0)
 			{
-				Font_Container c = { 0 };
-				c.font = font;
-				c.ppem = load_VDMX(&c, size);
-				if (!c.ppem)
-					c.ppem = calc_ppem_for_height( &c, size );
+				if (solid) 
+				{
+					ppem = std::max<int>(size * p->fontScale, 1);
+				}
+				else 
+				{
+					Font_Container c = { 0 };
+					c.font = font;
+					c.ppem = load_VDMX(&c, size);
+					if (!c.ppem)
+						c.ppem = calc_ppem_for_height( &c, size );
 
-				ppem = std::max<int>(c.ppem * p->fontScale, 1);
+					ppem = std::max<int>(c.ppem * p->fontScale, 1);
+				}
+
 				ppemMult = std::max<int>(ppem * hiresMult, 1);
 			}
 			if (TTF_SetFontSize(font, ppemMult))
@@ -645,8 +654,10 @@ _TTF_Font *SharedFontState::getFont(std::string family,
 		}
 		if (font)
 		{
-			/* RGSS doesn't use font hinting */
-			TTF_SetFontHinting(font, p->fontHinting);
+			if (solid)
+				TTF_SetFontHinting(font, TTF_HINTING_NORMAL);
+			else
+				TTF_SetFontHinting(font, p->fontHinting);
 		}
 	}
 	
@@ -1007,7 +1018,8 @@ _TTF_Font *Font::getSdlFont(int outline_size)
 
 	if (!*font)
 		*font = shState->fontState().getFont(p->name.c_str(),
-		                                     p->size, p->hiresMult, outline_size);
+		                                     p->size, p->hiresMult, outline_size, 
+											 p->isSolid);
 
 	if(outline_size && TTF_GetFontOutline(*font) != outline_size)
 		TTF_SetFontOutline(*font, outline_size);
