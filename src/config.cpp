@@ -379,8 +379,12 @@ static void setupScreenSize(Config &conf) {
 }
 
 bool Config::fontIsSolid(const char *fontName) const {
-    for (std::string solidfont : solidFonts)
-        if (!strcmp(solidfont.c_str(), fontName)) return true;
+    std::string lower(fontName);
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+        [](unsigned char c){ return std::tolower(c); });
+    
+    for (const std::string &solidfont : solidFonts)
+        if (solidfont == lower) return true;
     
     return false;
 }
