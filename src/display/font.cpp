@@ -812,7 +812,7 @@ struct FontPrivate
 	      outColorTmp(*other.outColor),
 	      sdlFont(other.sdlFont),
 	      sdlFontOutline(other.sdlFontOutline),
-          isSolid(false)
+          isSolid(other.isSolid)
 	{}
 
 	void operator=(const FontPrivate &o)
