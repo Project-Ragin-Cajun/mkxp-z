@@ -94,7 +94,7 @@ static SDL_RWops *openBundledFont()
 
 
 /* <name, size> */
-typedef std::pair<std::string, int> FontSizeKey;
+typedef std::tuple<std::string, int, bool> FontSizeKey;
 /* <name, ppem> */
 typedef std::pair<std::string, int> FontPPEMKey;
 
@@ -557,7 +557,7 @@ _TTF_Font *SharedFontState::getFont(std::string family,
 		family = "";
 	}
 
-	FontSizeKey key(family, size);
+	FontSizeKey key(family, size, solid);
 
 	TTF_Font *font;
 	int &ppem = p->size_to_ppem[key];
