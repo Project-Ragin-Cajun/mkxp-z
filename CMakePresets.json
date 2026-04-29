@@ -1,0 +1,41 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 4, "minor": 0, "patch": 0 },
+
+  "configurePresets": [
+    {
+      "name": "mingw64-debug",
+      "displayName": "MinGW64 — Debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_PREFIX_PATH": "${sourceDir}/windows/build-mingw64",
+        "MRI_VERSION": "3.1"
+      },
+      "environment": {
+        "PKG_CONFIG_PATH": "${sourceDir}/windows/build-mingw64/lib/pkgconfig:/mingw64/lib/pkgconfig"
+      }
+    },
+    {
+      "name": "mingw64-release",
+      "displayName": "MinGW64 — Release",
+      "inherits": "mingw64-debug",
+      "binaryDir": "${sourceDir}/build-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "mingw64-debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "mingw64-release"
+    }
+  ]
+}
