@@ -197,23 +197,14 @@ if(MKXPZ_HTTPS)
     pkg_check_modules(OPENSSL REQUIRED IMPORTED_TARGET openssl)
 endif()
 
-if(WIN32)
-    # MinGW ships iconv in its runtime; link it directly
-    find_library(ICONV_LIB NAMES iconv)
-endif()
-
 # ==============================================================================
-# xxd shader/asset embedding
+# Binary-to-C embedding (replaces xxd)
 # ==============================================================================
-# Meson uses xxd to convert shaders and assets into C byte arrays.
-# We replicate this with a custom command per input file.
+# Converts shaders and assets into C byte arrays using a pure CMake script.
+# No external tools required.
 # ==============================================================================
 
-find_program(XXD_EXE xxd REQUIRED
-        HINTS /usr/bin D:/Dev/msys64/usr/bin  # MSYS2 base layer (xxd ships with vim)
-        DOC "xxd executable"
-)
-
+set(MKXPZ_BIN2C "${CMAKE_SOURCE_DIR}/cmake/bin2c.cmake")
 set(MKXPZ_XXD_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/xxd")
 file(MAKE_DIRECTORY ${MKXPZ_XXD_OUTPUT_DIR})
 
@@ -237,19 +228,19 @@ foreach(input_file ${SHADER_FILES} ${ASSET_FILES})
     get_filename_component(base_name ${input_file} NAME)
     set(output_file "${MKXPZ_XXD_OUTPUT_DIR}/${base_name}.xxd")
 
-    # xxd generates C identifier names from the input path.
-    # The Meson build runs xxd from the build directory, so the input path
-    # is "../shader/common.h" which produces "___shader_common_h" (the ../
-    # becomes ___ after xxd's non-alnum-to-underscore conversion).
-    # We replicate this by computing the relative path from the binary dir.
+    # Compute the same relative path xxd would see from the build directory.
+    # "../shader/common.h" -> "___shader_common_h" after non-alnum conversion.
     file(RELATIVE_PATH rel_path "${CMAKE_BINARY_DIR}" "${input_file}")
 
     add_custom_command(
             OUTPUT ${output_file}
-            COMMAND ${XXD_EXE} -i ${rel_path} ${output_file}
+            COMMAND ${CMAKE_COMMAND}
+            -DINPUT=${rel_path}
+            -DOUTPUT=${output_file}
+            -P ${MKXPZ_BIN2C}
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            DEPENDS ${input_file}
-            COMMENT "xxd: ${base_name}"
+            DEPENDS ${input_file} ${MKXPZ_BIN2C}
+            COMMENT "bin2c: ${base_name}"
             VERBATIM
     )
     list(APPEND XXD_OUTPUTS ${output_file})
