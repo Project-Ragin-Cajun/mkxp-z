@@ -12,7 +12,7 @@ varying vec2 v_texCoord;
 
 /* Light source position in normalized [0, 1] screen space.
  * Values outside [0,1] are valid (off-screen source). */
-uniform vec2 lightPos;
+uniform vec2 lightPosition;
 
 /* RGBA tint of the rays (uses .rgb only; .a unused).
  * Driven by time-of-day from Ruby:
@@ -39,7 +39,7 @@ uniform float opacity;
 
 void main()
 {
-    vec2 delta = v_texCoord - lightPos;
+    vec2 delta = v_texCoord - lightPosition;
     float dist = length(delta);
     float angle = atan(delta.y, delta.x);
 
@@ -68,7 +68,13 @@ void main()
 * bright disc. */
     float innerFade = smoothstep(0.0, 0.05, dist);
 
-    float result = rays * falloff * innerFade * intensity;
+/* Suppress rays pointing upward from the source.
+ * Only rays projecting downward into the scene are
+ * physically plausible. */
+    float downward = clamp(delta.y, 0.0, 1.0);
+    float angular_mask = smoothstep(0.0, 0.3, downward);
+
+    float result = rays * falloff * innerFade * angular_mask * intensity;
 
 /* Alpha drives additive contribution via BlendAddition's
 * GL_SRC_ALPHA factor. RGB is the ray tint. */
