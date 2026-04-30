@@ -424,29 +424,6 @@ private:
     GLint u_opacity;
 };
 
-class TileShadowShader : public ShaderBase
-{
-public:
-    TileShadowShader();
-
-    void setHeightMap(const TEX::ID& texture) const;
-    void setMapSize(const Vec2& value) const;
-    void setScreenSize(const Vec2& value) const;
-    void setScrollOffset(const Vec2& value) const;
-    void setSunDirection(const Vec2& value) const;
-    void setShadowLength(float value) const;
-    void setOpacity(float value) const;
-
-private:
-    GLint u_heightMap;
-    GLint u_mapSize;
-    GLint u_screenSize;
-    GLint u_scrollOffset;
-    GLint u_sunDirection;
-    GLint u_shadowLength;
-    GLint u_shadowOpacity;
-};
-
 /* Global object containing all available shaders */
 struct ShaderSet
 {
@@ -479,7 +456,6 @@ struct ShaderSet
     XbrzSpriteShader xbrzSprite;
 #endif
     GodRayShader godRay;
-    TileShadowShader tileShadow;
 };
 
 #endif // SHADER_H

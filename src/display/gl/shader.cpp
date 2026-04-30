@@ -49,7 +49,6 @@
 #include "bicubic.frag.xxd"
 #include "lanczos3.frag.xxd"
 #include "godRay.frag.xxd"
-#include "tileShadow.frag.xxd"
 
 #ifdef MKXPZ_SSL
 #include "xbrz.frag.xxd"
@@ -937,53 +936,4 @@ void GodRayShader::setPhase(const float value) const
 void GodRayShader::setOpacity(const float value) const
 {
     gl.Uniform1f(u_opacity, value);
-}
-
-TileShadowShader::TileShadowShader()
-{
-    INIT_SHADER(simple, tileShadow, TileShadowShader)
-    init();
-
-    GET_U(heightMap);
-    GET_U(mapSize);
-    GET_U(screenSize);
-    GET_U(scrollOffset);
-    GET_U(sunDirection);
-    GET_U(shadowLength);
-    GET_U(shadowOpacity);
-}
-
-void TileShadowShader::setHeightMap(const TEX::ID& texture) const
-{
-    setTexUniform(u_heightMap, 1, texture);
-}
-
-void TileShadowShader::setMapSize(const Vec2& value) const
-{
-    gl.Uniform2f(u_mapSize, value.x, value.y);
-}
-
-void TileShadowShader::setScreenSize(const Vec2& value) const
-{
-    gl.Uniform2f(u_screenSize, value.x, value.y);
-}
-
-void TileShadowShader::setScrollOffset(const Vec2& value) const
-{
-    gl.Uniform2f(u_scrollOffset, value.x, value.y);
-}
-
-void TileShadowShader::setSunDirection(const Vec2& value) const
-{
-    gl.Uniform2f(u_sunDirection, value.x, value.y);
-}
-
-void TileShadowShader::setShadowLength(const float value) const
-{
-    gl.Uniform1f(u_shadowLength, value);
-}
-
-void TileShadowShader::setOpacity(const float value) const
-{
-    gl.Uniform1f(u_shadowOpacity, value);
 }

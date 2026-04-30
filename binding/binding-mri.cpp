@@ -110,7 +110,6 @@ void CUSLBindingInit();
 void httpBindingInit();
 
 void godRayOverlayBindingInit();
-void tileShadowOverlayBindingInit();
 
 RB_METHOD(mkxpDelta);
 RB_METHOD(mriPrint);
@@ -200,7 +199,6 @@ static void mriBindingInit()
     httpBindingInit();
 
     godRayOverlayBindingInit();
-    tileShadowOverlayBindingInit();
 
     if (rgssVer >= 3)
     {
