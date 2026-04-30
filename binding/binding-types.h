@@ -41,6 +41,7 @@ DECL_TYPE(Window);
 DECL_TYPE(MiniFFI);
 
 DECL_TYPE(GodRayOverlay);
+DECL_TYPE(TileShadowOverlay);
 #else
 #define TableType "Table"
 #define RectType "Rect"
@@ -58,6 +59,7 @@ DECL_TYPE(GodRayOverlay);
 #define MiniFFIType "MiniFFI"
 
 #define GodRayOverlayType "GodRayOverlay"
+#define TileShadowOverlayType "TileShadowOverlay"
 #endif
 
 #endif // BINDINGTYPES_H
