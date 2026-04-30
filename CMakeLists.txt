@@ -197,6 +197,59 @@ if(MKXPZ_HTTPS)
     pkg_check_modules(OPENSSL REQUIRED IMPORTED_TARGET openssl)
 endif()
 
+# --- Static build fixup for pkg-config IMPORTED targets ---
+# Two issues when statically linking MSYS2 system deps:
+#   1. pkg-config resolves some libs as explicit .dll.a paths — -static only
+#      affects -l flags, not explicit paths, so swap .dll.a -> .a directly.
+#   2. Ruby's .pc wraps deps in -Wl,-Bstatic ... -Wl,-Bdynamic. The trailing
+#      -Bdynamic poisons everything linked after MRI. Strip it.
+if(WIN32 AND MKXPZ_STATIC_EXECUTABLE)
+    set(_pkgconfig_targets
+            SDL2 SDL2_TTF PIXMAN PHYSFS VORBISFILE VORBIS OGG OPENAL
+            FREETYPE UCHARDET FLUIDSYNTH LIBPNG THEORA MRI ZLIB)
+    if(MKXPZ_HTTPS)
+        list(APPEND _pkgconfig_targets OPENSSL)
+    endif()
+
+    foreach(_tgt ${_pkgconfig_targets})
+        set(_target "PkgConfig::${_tgt}")
+        if(NOT TARGET ${_target})
+            continue()
+        endif()
+
+        # Fix INTERFACE_LINK_LIBRARIES: swap .dll.a paths and strip -Bdynamic
+        get_target_property(_libs ${_target} INTERFACE_LINK_LIBRARIES)
+        if(_libs)
+            set(_fixed_libs "")
+            foreach(_lib ${_libs})
+                if(_lib STREQUAL "" OR _lib STREQUAL "-Wl,-Bdynamic")
+                    continue()
+                elseif(_lib MATCHES "\\.dll\\.a$"
+                        AND NOT _lib MATCHES "${MKXPZ_PREFIX}")
+                    string(REPLACE ".dll.a" ".a" _static_path "${_lib}")
+                    if(EXISTS "${_static_path}")
+                        list(APPEND _fixed_libs "${_static_path}")
+                    else()
+                        list(APPEND _fixed_libs "${_lib}")
+                    endif()
+                else()
+                    list(APPEND _fixed_libs "${_lib}")
+                endif()
+            endforeach()
+            set_target_properties(${_target} PROPERTIES
+                    INTERFACE_LINK_LIBRARIES "${_fixed_libs}")
+        endif()
+
+        # Fix INTERFACE_LINK_OPTIONS: strip -Bdynamic there too
+        get_target_property(_opts ${_target} INTERFACE_LINK_OPTIONS)
+        if(_opts)
+            list(REMOVE_ITEM _opts "-Wl,-Bdynamic")
+            set_target_properties(${_target} PROPERTIES
+                    INTERFACE_LINK_OPTIONS "${_opts}")
+        endif()
+    endforeach()
+endif()
+
 # ==============================================================================
 # Binary-to-C embedding (replaces xxd)
 # ==============================================================================
@@ -457,10 +510,30 @@ if(WIN32)
     # OpenAL's WASAPI backend needs avrt; WinMM backend needs winmm
     set_property(TARGET PkgConfig::OPENAL APPEND PROPERTY
             INTERFACE_LINK_LIBRARIES avrt winmm)
-    # iconv is used by config, font, and binding-mri directly
+
+    # brotlidec (from FREETYPE) needs brotlicommon.
+    # Must be appended to FREETYPE's deps (not linked directly) so it
+    # appears AFTER brotlidec in the link line.
+    if(MKXPZ_STATIC_EXECUTABLE)
+        get_filename_component(_mingw_bin "${CMAKE_CXX_COMPILER}" DIRECTORY)
+        get_filename_component(_mingw_root "${_mingw_bin}" DIRECTORY)
+        set(_brotlicommon "${_mingw_root}/lib/libbrotlicommon.a")
+        if(EXISTS "${_brotlicommon}")
+            set_property(TARGET PkgConfig::FREETYPE APPEND PROPERTY
+                    INTERFACE_LINK_LIBRARIES "${_brotlicommon}")
+        else()
+            message(WARNING "Could not find libbrotlicommon.a at ${_brotlicommon}")
+        endif()
+    endif()
+
+    # OpenSSL needs ws2_32 (sockets) and crypt32 (certificates) after it
+    if(MKXPZ_HTTPS)
+        set_property(TARGET PkgConfig::OPENSSL APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES ws2_32 crypt32)
+    endif()
+
+    # iconv is used by config, font, and binding-mri
     target_link_libraries(${MKXPZ_EXE_NAME} PRIVATE iconv)
-    # crypt32 needed by HTTPS cert loading
-    target_link_libraries(${MKXPZ_EXE_NAME} PRIVATE crypt32)
 endif()
 
 # RPATH (Linux)
